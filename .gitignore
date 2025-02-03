@@ -8,6 +8,7 @@ node_modules
 concatenated-output.ts
 embedding-cache.json
 packages/plugin-buttplug/intiface-engine
+pnpm-lock.yaml
 
 node-compile-cache
 based-piggy.pem
