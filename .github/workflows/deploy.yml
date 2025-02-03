@@ -1,0 +1,43 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: unnecessary
+          if_key_exists: replace
+
+      - name: Wait for SSH
+        run: sleep 10
+
+      - name: Build
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ConnectionAttempts=3 ubuntu@${{ secrets.EC2_HOST }} '\
+            export NVM_DIR="$HOME/.nvm" && \
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+            cd eliza && \
+            git pull && \
+            /home/ubuntu/.nvm/versions/node/v23.3.0/bin/pnpm clean && \
+            /home/ubuntu/.nvm/versions/node/v23.3.0/bin/pnpm install --no-frozen-lockfile && \
+            /home/ubuntu/.nvm/versions/node/v23.3.0/bin/pnpm build'
+      - name: Wait between commands
+        run: sleep 5
+
+      - name: Start Application
+        if: success()
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ConnectionAttempts=3 ubuntu@${{ secrets.EC2_HOST }} '\
+            cd eliza && \
+            pm2 delete eliza || true && \
+            pm2 start "/home/ubuntu/.nvm/versions/node/v23.3.0/bin/pnpm" --name "eliza" -- start --characters="characters/piggy.character.json"' 

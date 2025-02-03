@@ -5,6 +5,7 @@ node_modules
 .env.production
 .env.local
 .env_main
+based-piggy.pem
 concatenated-output.ts
 embedding-cache.json
 packages/plugin-buttplug/intiface-engine
